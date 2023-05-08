@@ -1,37 +1,58 @@
-// get necessary elements from the HTML
-const selectVoice = document.createElement("select");
-const speakButton = document.querySelector("button");
-const textarea = document.querySelector("textarea");
-const faceImg = document.querySelector("img");
+// Wait for the DOM to load before executing any code
+window.addEventListener('DOMContentLoaded', init);
 
-// create a SpeechSynthesisUtterance object
-const utterance = new SpeechSynthesisUtterance();
+function init() {
+  // Get all necessary elements
+  const hornSelect = document.getElementById('horn-select');
+  const volumeControl = document.getElementById('volume');
+  const volumeIcon = document.querySelector('#volume-controls img');
+  const playButton = document.querySelector('button');
+  const audioElement = document.querySelector('audio');
+  const imageElement = document.querySelector('#expose img');
 
-// populate the "Select Voice" dropdown with available voices
-function populateVoices() {
-  const voices = speechSynthesis.getVoices();
-  for (let i = 0; i < voices.length; i++) {
-    const option = document.createElement("option");
-    option.textContent = voices[i].name;
-    selectVoice.appendChild(option);
+  // Set up event listeners
+  hornSelect.addEventListener('change', onHornSelect);
+  volumeControl.addEventListener('input', onVolumeChange);
+  playButton.addEventListener('click', onPlayButtonClick);
+  
+  // Initialize with the first horn
+  onHornSelect();
+
+  function onHornSelect() {
+    // Set the correct image and audio file
+    const hornName = hornSelect.value;
+    imageElement.src = `./assets/images/${hornName}.svg`;
+    audioElement.src = `./assets/audio/${hornName}.mp3`;
+  }
+
+  function onVolumeChange() {
+    // Set the correct volume icon and adjust audio volume
+    const volume = volumeControl.value;
+    audioElement.volume = volume / 100;
+    if (volume === '0') {
+      volumeIcon.src = './assets/icons/volume-level-0.svg';
+      volumeIcon.alt = 'Volume level 0';
+    } else if (volume < 33) {
+      volumeIcon.src = './assets/icons/volume-level-1.svg';
+      volumeIcon.alt = 'Volume level 1';
+    } else if (volume < 67) {
+      volumeIcon.src = './assets/icons/volume-level-2.svg';
+      volumeIcon.alt = 'Volume level 2';
+    } else {
+      volumeIcon.src = './assets/icons/volume-level-3.svg';
+      volumeIcon.alt = 'Volume level 3';
+    }
+  }
+
+  function onPlayButtonClick() {
+    // Play the audio and confetti if the Party Horn is selected
+    audioElement.play();
+    if (hornSelect.value === 'party-horn') {
+      confetti({
+        particleCount: 150,
+        spread: 180,
+        origin: { y: 0.6 },
+      });
+    }
   }
 }
-// wait for the voices to be loaded before populating the dropdown
-speechSynthesis.onvoiceschanged = populateVoices;
-
-// when the "Press to Talk" button is clicked, speak the text using the selected voice
-speakButton.addEventListener("click", () => {
-  if (speechSynthesis.speaking) return; // if already speaking, do nothing
-  const selectedVoice = selectVoice.selectedOptions[0].textContent;
-  utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === selectedVoice);
-  utterance.text = textarea.value;
-  speechSynthesis.speak(utterance);
-
-  // swap the face image to the open mouthed version
-  faceImg.src = "assets/images/smiling-open.png";
-});
-
-
-utterance.onend = () => {
-  faceImg.src = "assets/images/smiling.png";
-};
