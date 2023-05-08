@@ -48,11 +48,10 @@ function init() {
     // Play the audio and confetti if the Party Horn is selected
     audioElement.play();
     if (hornSelect.value === 'party-horn') {
-      confetti({
-        particleCount: 150,
-        spread: 180,
-        origin: { y: 0.6 },
+      jsConfetti.addConfetti({
+        confettiRadius: 5,
       });
     }
+    audioElement.play();  
   }
 }
