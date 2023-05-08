@@ -1,79 +1,37 @@
-// expose.js
+// get necessary elements from the HTML
+const selectVoice = document.createElement("select");
+const speakButton = document.querySelector("button");
+const textarea = document.querySelector("textarea");
+const faceImg = document.querySelector("img");
 
-window.addEventListener('DOMContentLoaded', init);
+// create a SpeechSynthesisUtterance object
+const utterance = new SpeechSynthesisUtterance();
 
-function init() {
-  // Initialize variables for image and audio sources
-  let soundImageSrc = "assets/images/no-image.png";
-  let soundFileSrc = "";
-  let hornSound = document.querySelector("audio");
-  let volumeImage = document.querySelector("#volume-controls img");
-  let volume = document.querySelector("#volume-controls input");
-
-  // Update the image and audio sources based on the selected horn
-  function updateSound() {
-    const hornSelect = document.getElementById("horn-select");
-    const soundImage = document.getElementById("expose").querySelector("img");
-
-    // Update the image and audio sources based on the selected horn
-    if (hornSelect.value === "air-horn") {
-      soundImageSrc = "assets/images/air-horn.svg";
-      soundFileSrc = "assets/audio/air-horn.mp3";
-    } else if (hornSelect.value === "car-horn") {
-      soundImageSrc = "assets/images/car-horn.svg";
-      soundFileSrc = "assets/audio/car-horn.mp3";
-    } else if (hornSelect.value === "party-horn") {
-      soundImageSrc = "assets/images/party-horn.svg";
-      soundFileSrc = "assets/audio/party-horn.mp3";
-    } else {
-      soundImageSrc = "assets/images/no-image.png";
-      soundFileSrc = "";
-    }
-
-    soundImage.src = soundImageSrc;
-    hornSound.src = soundFileSrc;
+// populate the "Select Voice" dropdown with available voices
+function populateVoices() {
+  const voices = speechSynthesis.getVoices();
+  for (let i = 0; i < voices.length; i++) {
+    const option = document.createElement("option");
+    option.textContent = voices[i].name;
+    selectVoice.appendChild(option);
   }
-
-  // Update the volume icon and audio volume based on the volume range input
-  function updateVolume() {
-    const hornSelect = document.getElementById("horn-select");
-
-    // Update the volume icon and audio volume based on the volume range input
-    if (volume.value >= 67) {
-      volumeImage.src = "assets/icons/volume-level-3.svg";
-    } else if (volume.value >= 33) {
-      volumeImage.src = "assets/icons/volume-level-2.svg";
-    } else if (volume.value >= 1) {
-      volumeImage.src = "assets/icons/volume-level-1.svg";
-    } else {
-      volumeImage.src = "assets/icons/volume-level-0.svg";
-    }
-
-    hornSound.volume = volume.value / 100;
-  }
-
-  // Play the selected sound
-  function playSound() {
-    const hornSelect = document.getElementById("horn-select");
-    const audio = document.querySelector('audio');
-
-    if (hornSelect.value === 'party-horn') {
-      const jsConfetti = new JSConfetti();
-      jsConfetti.addConfetti({
-        confettiRadius: 5,
-      });
-    }
-    audio.play();
-  }
-
-  const hornSelect = document.getElementById("horn-select");
-  const volumeInput = document.getElementById("volume");
-
-  // Attach event listeners to update sound and volume controls
-  hornSelect.addEventListener("change", updateSound);
-  volumeInput.addEventListener("input", updateVolume);
-
-  // Attach event listener to play the sound
-  const soundButton = document.querySelector("button");
-  soundButton.addEventListener("click", playSound);
 }
+// wait for the voices to be loaded before populating the dropdown
+speechSynthesis.onvoiceschanged = populateVoices;
+
+// when the "Press to Talk" button is clicked, speak the text using the selected voice
+speakButton.addEventListener("click", () => {
+  if (speechSynthesis.speaking) return; // if already speaking, do nothing
+  const selectedVoice = selectVoice.selectedOptions[0].textContent;
+  utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === selectedVoice);
+  utterance.text = textarea.value;
+  speechSynthesis.speak(utterance);
+
+  // swap the face image to the open mouthed version
+  faceImg.src = "assets/images/smiling-open.png";
+});
+
+
+utterance.onend = () => {
+  faceImg.src = "assets/images/smiling.png";
+};
