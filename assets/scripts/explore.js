@@ -1,51 +1,37 @@
-// explore.js
+// get necessary elements from the HTML
+const selectVoice = document.createElement("select");
+const speakButton = document.querySelector("button");
+const textarea = document.querySelector("textarea");
+const faceImg = document.querySelector("img");
 
-window.addEventListener('DOMContentLoaded', init);
+// create a SpeechSynthesisUtterance object
+const utterance = new SpeechSynthesisUtterance();
 
-function init() {
-  const voiceSelect = document.querySelector('#voice-select');
-  const textToSpeak = document.querySelector('#text-to-speak');
-  const speakButton = document.querySelector('button');
-  const faceImage = document.querySelector('img');
-
-  const synth = window.speechSynthesis;
-
-  // Load available voices and populate dropdown
-  function loadVoices() {
-    voices = synth.getVoices();
-    voices.forEach(voice => {
-      const option = document.createElement('option');
-      option.textContent = `${voice.name} (${voice.lang})`;
-      option.setAttribute('data-lang', voice.lang);
-      option.setAttribute('data-name', voice.name);
-      voiceSelect.appendChild(option);
-    });
+// populate the "Select Voice" dropdown with available voices
+function populateVoices() {
+  const voices = speechSynthesis.getVoices();
+  for (let i = 0; i < voices.length; i++) {
+    const option = document.createElement("option");
+    option.textContent = voices[i].name;
+    selectVoice.appendChild(option);
   }
-  loadVoices();
-  
-  if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = loadVoices;
-  }
-
-  // Speak the text with the selected voice
-  function speakText() {
-    const selectedVoice = voiceSelect.selectedOptions[0].getAttribute('data-name');
-    const utterance = new SpeechSynthesisUtterance(textToSpeak.value);
-
-    voices.forEach(voice => {
-      if (voice.name === selectedVoice) {
-        utterance.voice = voice;
-      }
-    });
-
-    utterance.addEventListener('end', () => {
-      faceImage.src = 'assets/images/smiling.png'; // Set face to smiling after speaking ends
-    });
-
-    synth.speak(utterance);
-
-    faceImage.src = 'assets/images/smiling-open.png'; // Set face to open-mouthed while synthesizer is speaking
-  }
-
-  speakButton.addEventListener('click', speakText);
 }
+// wait for the voices to be loaded before populating the dropdown
+speechSynthesis.onvoiceschanged = populateVoices;
+
+// when the "Press to Talk" button is clicked, speak the text using the selected voice
+speakButton.addEventListener("click", () => {
+  if (speechSynthesis.speaking) return; // if already speaking, do nothing
+  const selectedVoice = selectVoice.selectedOptions[0].textContent;
+  utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === selectedVoice);
+  utterance.text = textarea.value;
+  speechSynthesis.speak(utterance);
+
+  // swap the face image to the open mouthed version
+  faceImg.src = "assets/images/smiling-open.png";
+});
+
+
+utterance.onend = () => {
+  faceImg.src = "assets/images/smiling.png";
+};
